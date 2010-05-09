@@ -1,0 +1,59 @@
+DESCRIPTION
+
+This is a very simple SMTP-based mailer implementation.
+
+CONFIGURATION
+
+You'll need to do two things before making use of the Mailer. First, you need to set the mailer parameters:
+
+	SimpleMailer.template_directory = "templates"
+	SimpleMailer.domain = "mail.acme.com"
+	SimpleMailer.host = "smtp.acme.com"
+	SimpleMailer.port = 25
+	SimpleMailer.username = "foo@bar.com"
+	SimpleMailer.password = "baz"
+
+Second, you'll need to set up your templates using ERb syntax in the template directory you specified in the mailer parameters. There's a special template called _content that is used to actually create the raw message content. A basic template for sending plain text emails is provided in the example directory.
+
+USAGE
+
+The simplest way to use it is to just call deliver on the Mailer class:
+
+	Mailer.deliver!(:from => "The Management <admin@acme.com>",:to => "joe@foobar.com", 
+		:subject =>"This Is A Test", :name => 'Joe', :template => :test)
+
+If you just want to see the actual raw message content, without sending it, you can just use content:
+
+Mailer.content(:from => "The Management <admin@acme.com>",:to => "joe@foobar.com", 
+	:subject =>"This Is A Test", :name => 'Joe', :template => :test)
+
+You could also instantiate an instance of the Mailer class:
+
+	mailer = Mailer.new(:from => "The Management <admin@acme.com>",:to => "joe@foobar.com", 
+		:subject =>"This Is A Test", :name => 'Joe', :template => :test)
+		
+and then call #deliver or #content on the newly created object:
+
+	puts mailer.content
+	mailer.deliver!
+	
+A more sophisticated way to use it is to inherit from Mailer to create your own custom Mailer:
+
+	class MyMailer < Mailer
+		def initialize(name)
+			super(:from => "The Management <admin@acme.com>",:to => email, 
+				:subject =>"Welcome #{name}", :name => name, :template => :test)
+		end
+	end
+
+This makes it much less cumbersome to invoke the mailer:
+
+	MyMailer.new("Joe","Joe <joe@acme.com>").deliver!	
+
+You can further override your Mailer configuration parameters using your custom Mailer:
+
+	MyMailer.template_directory = "my_mailer"
+	
+LIMITATIONS
+
+There is presently no support for additional headers like "Reply-To" or construct multi-part MIME messages. These are easy to add since the message generation is done using the special _content template. So, for example, you could add a :parts option with a hash of MIME types / bodies, and simply iterate through that within the _content template.
